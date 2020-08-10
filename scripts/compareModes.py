@@ -67,11 +67,11 @@ def stackModesForSmallCell(ddb, sorted=False):
                     rvec = a1 * n + a2 * m
                     if n == 1 and m == 1:
                         first_piece = mode * np.exp(1j * np.dot(qpt.cart_coords, rvec))
-                        second_piece = mode * np.exp(1j * np.dot(qpt.cart_coords, rvec + a2))
+                        second_piece = mode * np.exp(1j * np.dot(qpt.cart_coords, rvec + lattice[1]))
                         large_mode = np.hstack((first_piece, second_piece))
                     else:
                         first_piece = mode * np.exp(1j * np.dot(qpt.cart_coords, rvec))
-                        second_piece = mode * np.exp(1j * np.dot(qpt.cart_coords, rvec + a2))
+                        second_piece = mode * np.exp(1j * np.dot(qpt.cart_coords, rvec + lattice[1]))
                         large_mode = np.hstack((large_mode, np.hstack((first_piece, second_piece))))
             new_modes.append(norm * large_mode)
     
