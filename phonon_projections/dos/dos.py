@@ -1,4 +1,5 @@
 import numpy as np
+import h5py
 
 
 class Dos:
@@ -66,3 +67,17 @@ class Dos:
             + self.weights[idxmax] * (energy - self.energies[idxmin])
         ) / (self.energies[idxmax] - self.energies[idxmin])
         return weight
+
+    def write(self, filename):
+        if filename.endswith(".h5"):
+            pass
+        else:
+            filename += ".h5"
+        with h5py.File(filename, "w") as f:
+            f.create_dataset("weights", data=self.weights)
+            f.create_dataset("energies", data=self.energies)
+
+    @classmethod
+    def read(cls, filename):
+        with h5py.File(filename, "r") as f:
+            return cls(f["energies"], f["weights"])
