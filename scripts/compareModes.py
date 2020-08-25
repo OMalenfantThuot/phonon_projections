@@ -65,7 +65,7 @@ def stackModesForSmallCell(ddb, sorted=False):
     all_eigdis = np.array(all_eigdis)
 
     # this is the size difference between the two cells
-    sizes = [4, 2]
+    sizes = [4,2]
     norm = 1 / np.sqrt(np.prod(sizes))
     new_modes = []
     lattice = ddb.structure.lattice.matrix
@@ -116,8 +116,20 @@ def main():
     small_ddb = readDDB(args.small)
     # big_ddb = readDDB(args.big)
     seigs, svecs = stackModesForSmallCell(small_ddb, sorted=False)
+
+    #print('idx 46:', seigs[46]/8065.5)
+    #print('idx 47:', seigs[47]/8065.5)
+
+    #g1 = h5py.File('gamma_modes.h5', 'w')
+    #g1.create_dataset('first_mode', data = svecs[46])
+    #g1.create_dataset('second_mode', data = svecs[47])
+    #g1.close()
+
+
+
+    
     # beigs, bvecs = getModesAtGamma(big_ddb)
-    bvecs = h5py.File("new.h5", "r")["displacements"][:].reshape(1000, 96)
+    bvecs = h5py.File("workdir/new.h5", "r")["displacements"][:].reshape(1000, 96)
     sums = np.zeros(svecs.shape[0])
     for n in range(bvecs.shape[0]):
         bvec = bvecs[n]
