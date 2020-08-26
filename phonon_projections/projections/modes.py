@@ -25,7 +25,7 @@ def stackModesForSmallCell(ddb, sorted=False):
 
     # this is the size difference between the two cells
     sizes = [4, 2]
-    norm = 1 / np.sqrt(np.prod(sizes))
+    norm = 1 / np.sqrt(2 * np.prod(sizes))
     new_modes = []
     lattice = ddb.structure.lattice.matrix
     a1 = lattice[0]
@@ -59,3 +59,18 @@ def stackModesForSmallCell(ddb, sorted=False):
     else:
         sorted_indices = np.argsort(all_eigs)
         return all_eigs[sorted_indices], new_modes[sorted_indices]
+
+
+def getModesAtGamma(ddb):
+    shutil.rmtree("./tmp", ignore_errors=True)
+    bands = ddb.anaget_phmodes_at_qpoint(
+        ddb.qpoints[0],
+        asr=1,
+        chneut=1,
+        dipdip=1,
+        workdir="./tmp",
+        verbose=0,
+        anaddb_kwargs={"eivec": 1},
+    )
+    eigdis = bands.dyn_mat_eigenvect[0]
+    return bands.phfreqs[0] * 8065.5, eigdis
