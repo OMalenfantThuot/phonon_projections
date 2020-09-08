@@ -10,14 +10,18 @@ from phonon_projections.projections import stackModesForSmallCell, project_mode
 
 
 def build_parser():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
     run_type_subparser = parser.add_subparsers(
         dest="run_type", help="Chooses the type of run."
     )
 
     # Displacements analysis
     displacements_parser = run_type_subparser.add_parser(
-        "disp", help="Displacements analysis."
+        "disp",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        help="Displacements analysis.",
     )
     displacements_parser.add_argument(
         "-s",
@@ -28,11 +32,27 @@ def build_parser():
     displacements_parser.add_argument(
         "-f", "--filename", type=str, help="h5 file containing the displacements."
     )
+    displacements_parser.add_argument(
+        "--size",
+        nargs=2,
+        help="Size of the supercell in number of primitive cells [X, Y].",
+        type=int,
+    )
+    displacements_parser.add_argument(
+        "-g",
+        "--geo",
+        default="o",
+        help="Geometry of the supercell, either orthorhombic or hexagonal.",
+        choices=["o", "h"],
+    )
 
     # Modes projection to primitive cell
-    mode_parser = run_type_subparser.add_parser("modes", help="Modes projection.")
+    mode_parser = run_type_subparser.add_parser(
+        "modes",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        help="Modes projection.",
+    )
     mode_parser.add_argument(
-        "-s",
         "--small",
         type=str,
         help="DDB file to open with the primitive unit cell modes.",
@@ -43,6 +63,19 @@ def build_parser():
         type=str,
         help="h5 file containing the modes and energies of the supercell.",
     )
+    mode_parser.add_argument(
+        "--size",
+        nargs=2,
+        help="Size of the supercell in number of primitive cells [X, Y].",
+        type=int,
+    )
+    mode_parser.add_argument(
+        "-g",
+        "--geo",
+        default="o",
+        help="Geometry of the supercell, either orthorhombic or hexagonal.",
+        choices=["o", "h"],
+    )
     return parser
 
 
@@ -52,7 +85,9 @@ def main(args):
         exit(-1)
 
     small_ddb = DDB(args.small)
-    seigs, svecs = stackModesForSmallCell(small_ddb, sorted=False)
+    seigs, svecs = stackModesForSmallCell(
+        small_ddb, args.size, geometry=args.geo, sorted=False
+    )
 
     if args.run_type == "disp":
         bvecs = h5py.File(args.filename, "r")["displacements"][:].reshape(1000, 96)
@@ -94,10 +129,6 @@ def main(args):
             bvec = bvecs[:, n]
             for j, svec in enumerate(svecs):
                 val = project_mode(bvec, svec)
-                if val > 1:
-                    print(val)
-                    print(np.linalg.norm(svec))
-                    print(np.linalg.norm(bvec))
                 sums[n] += val
                 if val > maxs[n]:
                     maxs[n], vec_ids[n] = val, j
