@@ -37,10 +37,10 @@ def stackModesForSmallCell(ddb, sizes, geometry="orthorhombic", sorted=False):
     for i, qpt in enumerate(ddb.qpoints):
         for j, mode in enumerate(all_eigdis[i]):
             if geometry in ["o", "orthorhombic"]:
-                for n in range(sizes[0]):
-                    for m in range(sizes[1]):
+                for m in range(sizes[0]):
+                    for n in range(sizes[1]):
                         # check for complex phase
-                        rvec = a1 * n + a2 * m
+                        rvec = a1 * m + a2 * n
                         first_piece = mode * np.exp(1j * np.dot(qpt.cart_coords, rvec))
                         second_piece = mode * np.exp(
                             1j * np.dot(qpt.cart_coords, rvec + lattice[1])
@@ -54,14 +54,14 @@ def stackModesForSmallCell(ddb, sizes, geometry="orthorhombic", sorted=False):
                 new_modes.append(norm * large_mode)
 
             elif geometry in ["h", "hexagonal"]:
-                for m in range(sizes[1]):
-                    for n in range(sizes[0]):
-                        rvec = a1 * n + a2 * m
+                for m in range(sizes[0]):
+                    for n in range(sizes[1]):
+                        rvec = a1 * m + a2 * n
                         piece = mode * np.exp(1j * np.dot(qpt.cart_coords, rvec))
                         if n == 0 and m == 0:
                             large_mode = piece.copy()
                         else:
-                            large_mode = np.hstack(large_mode, piece)
+                            large_mode = np.hstack((large_mode, piece))
                 new_modes.append(norm * large_mode)
 
     new_modes = np.array(new_modes)
