@@ -27,11 +27,7 @@ def get_overlap_with_gamma_modes(posinp):
             elif j%3 ==2 :
                 final[j] = -1.0 * init[j-1]
         final_modes[:,i] = final
-    energies = ph.energies    
-    #f = h5py.File('/home/msadikov/projects/rrg-cotemich-ac/msadikov/programmes/phonon_projections/workdir/modes_{:03}.h5'.format(config_number), 'w')
-    #f.create_dataset('modes', data = final_modes)
-    #f.create_dataset('energies', data=energies)
-    #f.close ()
+    energies = ph.energies
 
 
     g = h5py.File('/home/msadikov/projects/rrg-cotemich-ac/msadikov/programmes/phonon_projections/workdir/gamma_modes.h5', 'r')
@@ -113,7 +109,4 @@ for a in range(configs):
             plt.xlabel('Energy')
             plt.ylabel('Projection')
             plt.plot(energies_sorted, val_sorted)
-            plt.savefig('../workdir/projection_plots/32at_3d_plots/config_{:03}_plot.png'.format(a))
-
-
-            
+            plt.savefig('../workdir/projection_plots/32at_3d_plots/config_{:03}_plot.png'.format(a)) 
