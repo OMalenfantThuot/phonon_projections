@@ -1,6 +1,7 @@
 from mlcalcdriver import Posinp
 from mlcalcdriver.calculators import SchnetPackCalculator
 from mlcalcdriver.workflows import Phonon
+from phonon_projections.utils import gramschmidt
 import h5py
 
 def get_orthonormal_basis(model, posinp, write=False):

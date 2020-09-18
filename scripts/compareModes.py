@@ -88,9 +88,12 @@ def main(args):
     seigs, svecs = stackModesForSmallCell(
         small_ddb, args.size, geometry=args.geo, sorted=False
     )
+    natoms = 4 * np.prod(args.size) if args.geo == "o" else 2 * np.prod(args.size)
 
     if args.run_type == "disp":
-        bvecs = h5py.File(args.filename, "r")["displacements"][:].reshape(1000, 96)
+        bvecs = h5py.File(args.filename, "r")["displacements"][:].reshape(
+            -1, 3 * natoms
+        )
         sums = np.zeros(svecs.shape[0])
         for n in range(bvecs.shape[0]):
             bvec = bvecs[n]
