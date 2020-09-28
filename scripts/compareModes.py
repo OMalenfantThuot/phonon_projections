@@ -76,6 +76,11 @@ def build_parser():
         help="Geometry of the supercell, either orthorhombic or hexagonal.",
         choices=["o", "h"],
     )
+    mode_parser.add_argument(
+        "--write",
+        action="store_true",
+        help="If used, the energy projection of the modes is written.",
+    )
     return parser
 
 
@@ -123,31 +128,43 @@ def main(args):
 
     elif args.run_type == "modes":
         with h5py.File(args.filename, "r") as f:
-            bvecs = f["modes"][:]
-            beigs = f["energies"][:]
+            try:
+                bvecs = f["modes"][:]
+                beigs = f["energies"][:]
+            except:
+                bvecs = f["basis"][:]
+                beigs = np.zeros(bvecs.shape[0])
         nmodes = len(beigs)
-        maxs, sums = np.zeros(nmodes), np.zeros(nmodes)
+        maxs, sums, energies = np.zeros(nmodes), np.zeros(nmodes), np.zeros(nmodes)
         vec_ids = np.zeros(nmodes).astype(int)
         for n in range(nmodes):
             bvec = bvecs[:, n]
             for j, svec in enumerate(svecs):
                 val = project_mode(bvec, svec)
                 sums[n] += val
+                energies[n] += val * seigs[j]
                 if val > maxs[n]:
                     maxs[n], vec_ids[n] = val, j
 
-        for n in range(nmodes):
-            if maxs[n] > 0.9:
-                print(
-                    "big frequency",
-                    beigs[n],
-                    "overlap:",
-                    maxs[n],
-                    "small frequency [cm^-1]:",
-                    seigs[vec_ids[n]],
-                    "sum:",
-                    sums[n],
-                )
+        assert np.allclose(sums, np.ones(nmodes), atol=1.0e-6)
+
+        if args.write:
+            with h5py.File(args.filename, "r+") as f:
+                f.create_dataset("projected_energies", data=energies)
+
+        #for n in range(nmodes):
+        #    #if maxs[n] > 0.9:
+        #    #    print(
+        #    #        "big frequency",
+        #    #        beigs[n],
+        #    #        "overlap:",
+        #    #        maxs[n],
+        #    #        "small frequency [cm^-1]:",
+        #    #        seigs[vec_ids[n]],
+        #    #        "sum:",
+        #    #        sums[n],
+        #    #    )
+        #    print('Freq:', beigs[n], "Projected energy:", energies[n], "max:", maxs[n])
     else:
         raise ValueError("run_type not recognized.")
 
