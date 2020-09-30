@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 import argparse
-from phonon_projections.utils import get_normal_modes
+from phonon_projections.utils import get_normal_modes, convert_modes_to_pixels
 import h5py
 
 
@@ -10,9 +10,16 @@ def main(args):
         args.posinp, args.model, device=args.device, rotate=args.rotate
     )
     filename = args.name if args.name.endswith(".h5") else args.name + ".h5"
-    with h5py.File(filename, "w") as f:
-        f.create_dataset("modes", data=modes)
-        f.create_dataset("energies", data=energies)
+    if args.out == "array":
+        with h5py.File(filename, "w") as f:
+            f.create_dataset("modes", data=modes)
+            f.create_dataset("energies", data=energies)
+    elif args.out == "image":
+        images = convert_modes_to_pixels(args.posinp, modes)
+        with h5py.File(filename, "w") as f:
+            f.create_dataset("images", data=images)
+            f.create_dataset("energies", data=energies)
+
 
 
 def create_parser():
@@ -36,6 +43,12 @@ def create_parser():
         "--rotate",
         action="store_true",
         help="Add to rotate the modes from the xz plan to the xy plan.",
+    )
+    parser.add_argument(
+        "--out",
+        choices = ["array", "image"],
+        default = "array",
+        help="Save the modes either as an array or an image.",
     )
     return parser
 

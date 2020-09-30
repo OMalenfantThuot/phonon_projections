@@ -2,7 +2,7 @@ import numpy as np
 from mlcalcdriver import Posinp
 from mlcalcdriver.calculators import SchnetPackCalculator
 from mlcalcdriver.workflows import Phonon
-import h5py
+from copy import copy
 
 
 def get_normal_modes(posinp, model, device="cpu", rotate=False):
@@ -27,3 +27,20 @@ def get_normal_modes(posinp, model, device="cpu", rotate=False):
 
     else:
         return ph.energies, ph.normal_modes
+
+
+def convert_modes_to_pixels(posinp, modes):
+    posinp = Posinp.from_file(posinp)
+    init_image = posinp.to_pixels()
+    i1, i2, i3 = np.where(init_image > 0.5)
+    images = []
+
+    for i in range(3 * len(posinp)):
+        mode = modes[:, i].reshape(-1, 3)
+        image = copy(init_image)
+        new = np.zeros_like(image)
+        image = np.stack([image, new, new, new], axis=-1)
+        image[i1, i2, i3, 1:] = mode
+        images.append(image)
+
+    return np.array(images)
