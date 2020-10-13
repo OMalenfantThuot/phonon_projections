@@ -57,4 +57,4 @@ def get_dos(
     ph.read(acoustic=True)
     dos = ph.get_dos(kpts=qpoints).sample_grid(npts=npts, width=width)
     ph.clean()
-    return Dos(dos.energy, dos.weights[0])
+    return Dos(dos.energy * 8065.6, dos.weights[0])
