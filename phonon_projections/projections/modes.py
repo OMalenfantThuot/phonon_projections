@@ -5,6 +5,7 @@ import shutil
 def stackModesForSmallCell(ddb, sizes, geometry="orthorhombic", sorted=False):
 
     all_eigdis, all_eigs = [], []
+    eig_q_dict = {}
     assert len(sizes) == 2, "Sizes must be of length 2."
 
     for qpt in ddb.qpoints:
@@ -64,9 +65,13 @@ def stackModesForSmallCell(ddb, sizes, geometry="orthorhombic", sorted=False):
                             large_mode = np.hstack((large_mode, piece))
                 new_modes.append(norm * large_mode)
 
+        # Creating dictionary of indices, qpoints, eigenvectors and eigenvalues
+
+        eig_q_dict[qpt] = new_modes[6 * i : 6 * i + 6]
+
     new_modes = np.array(new_modes)
     if not sorted:
-        return all_eigs, new_modes
+        return all_eigs, new_modes, eig_q_dict
     else:
         sorted_indices = np.argsort(all_eigs)
         return all_eigs[sorted_indices], new_modes[sorted_indices]

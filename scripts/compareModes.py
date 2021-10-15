@@ -81,6 +81,42 @@ def build_parser():
         action="store_true",
         help="If used, the energy projection of the modes is written.",
     )
+
+    # Modes projection to primitive cell
+    mode_parser = run_type_subparser.add_parser(
+        "projection",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        help="Modes projection by qpoint.",
+    )
+    mode_parser.add_argument(
+        "--small",
+        type=str,
+        help="DDB file to open with the primitive unit cell modes.",
+    )
+    mode_parser.add_argument(
+        "-f",
+        "--filename",
+        type=str,
+        help="h5 file containing the modes and energies of the supercell.",
+    )
+    mode_parser.add_argument(
+        "--size",
+        nargs=2,
+        help="Size of the supercell in number of primitive cells [X, Y].",
+        type=int,
+    )
+    mode_parser.add_argument(
+        "-g",
+        "--geo",
+        default="o",
+        help="Geometry of the supercell, either orthorhombic or hexagonal.",
+        choices=["o", "h"],
+    )
+    mode_parser.add_argument(
+        "--write",
+        action="store_true",
+        help="If used, the energy projection of the modes is written.",
+    )
     return parser
 
 
@@ -90,9 +126,10 @@ def main(args):
         exit(-1)
 
     small_ddb = DDB(args.small)
-    seigs, svecs = stackModesForSmallCell(
+    seigs, svecs, eig_dict = stackModesForSmallCell(
         small_ddb, args.size, geometry=args.geo, sorted=False
     )
+    #    print(svecs)
     natoms = 4 * np.prod(args.size) if args.geo == "o" else 2 * np.prod(args.size)
 
     if args.run_type == "disp":
@@ -135,6 +172,8 @@ def main(args):
                 bvecs = f["basis"][:]
                 beigs = np.zeros(bvecs.shape[0])
         nmodes = len(beigs)
+        #        print(nmodes)
+        #        print(beigs)
         maxs, sums, energies = np.zeros(nmodes), np.zeros(nmodes), np.zeros(nmodes)
         vec_ids = np.zeros(nmodes).astype(int)
         for n in range(nmodes):
@@ -152,19 +191,34 @@ def main(args):
             with h5py.File(args.filename, "r+") as f:
                 f.create_dataset("projected_energies", data=energies)
 
-        #for n in range(nmodes):
-        #    #if maxs[n] > 0.9:
-        #    #    print(
-        #    #        "big frequency",
-        #    #        beigs[n],
-        #    #        "overlap:",
-        #    #        maxs[n],
-        #    #        "small frequency [cm^-1]:",
-        #    #        seigs[vec_ids[n]],
-        #    #        "sum:",
-        #    #        sums[n],
-        #    #    )
-        #    print('Freq:', beigs[n], "Projected energy:", energies[n], "max:", maxs[n])
+    elif args.run_type == "projection":
+        with h5py.File(args.filename, "r") as f:
+            try:
+                bvecs = f["modes"][:]
+                beigs = f["energies"][:]
+            except:
+                bvecs = f["basis"][:]
+                beigs = np.zeros(bvecs.shape[0])
+        nmodes = len(beigs)
+        sums = np.zeros(nmodes)
+        proj_list = []
+        for n in range(nmodes):
+            bvec = bvecs[:, n]
+            beig = beigs[n]
+            for key in eig_dict.keys():
+                sqmode = eig_dict[key]
+                sqmode = np.array(sqmode)
+                sum_q = 0.0
+                for j, svec in enumerate(sqmode):
+                    if j == 4 or j == 5:
+                        val = project_mode(bvec, svec)
+                        sum_q += val
+                        sums[n] += val
+                temp = {}
+                temp[n + 1] = {beig: {key: sum_q}}
+                proj_list.append(temp)
+
+        print(proj_list)
     else:
         raise ValueError("run_type not recognized.")
 
