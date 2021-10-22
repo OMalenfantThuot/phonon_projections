@@ -5,6 +5,7 @@ import os
 import h5py
 import matplotlib.pyplot as plt
 
+
 def main(args):
     with h5py.File(args.primitive, "r") as f:
         energies = f["energies"][:]
@@ -26,13 +27,6 @@ def main(args):
         for j in range(ndim):
             defect_mode = modes[:, j]
 
-    #g = h5py.File(
-    #    "/home/msadikov/projects/rrg-cotemich-ac/msadikov/programmes/phonon_projections/workdir/gamma_modes.h5",
-    #    "r",
-    #)
-    #gam_mode_1 = g["first_mode"]
-    #gam_mode_2 = g["second_mode"]
-
     sum1, sum2 = 0, 0
     max1, max2 = 0, 0
     val_arr_1 = np.zeros(96)
@@ -53,27 +47,10 @@ def main(args):
             mode_dom_2 = i
     val = val_arr_1 + val_arr_2
 
-    # return mode_dom_1, mode_dom_2, max1, max2, energies[mode_dom_1], energies[mode_dom_2]
     return val, energies
 
 
 pristine_file = "/home/msadikov/projects/rrg-cotemich-ac/msadikov/programmes/scripts_raman/databases/graphene_data/32_atoms/positions/32at_pristine.xyz"
-
-# defect_file = '/home/msadikov/projects/rrg-cotemich-ac/msadikov/programmes/scripts_raman/databases/graphene_data/32_atoms_maria/2_def/32at_2d_000_(x1).xyz'
-
-
-# val, energies = get_overlap_with_gamma_modes (pristine_file)
-# plt.figure(figsize=(7,5))
-# plt.xlabel('Energy')
-# plt.ylabel('Projection on highest gamma modes')
-
-
-# indices = np.argsort(energies)
-# val_sorted = val[indices]
-
-# energies_sorted = energies[indices]
-# plt.plot(energies_sorted, val_sorted, linewidth=1)
-# plt.scatter(energies, val, s=1, color='b')
 
 maxrep = 7
 n_atoms = 32
