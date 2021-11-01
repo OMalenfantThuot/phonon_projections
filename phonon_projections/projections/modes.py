@@ -36,6 +36,7 @@ def stackModesForSmallCell(ddb, sizes, geometry="orthorhombic", sorted=False):
 
     for i, qpt in enumerate(ddb.qpoints):
         for j, mode in enumerate(all_eigdis[i]):
+            # for j, mode in enumerate([all_eigdis[6][0]]):
             if geometry in ["o", "orthorhombic"]:
                 for m in range(sizes[0]):
                     for n in range(sizes[1]):
@@ -62,7 +63,16 @@ def stackModesForSmallCell(ddb, sizes, geometry="orthorhombic", sorted=False):
                             large_mode = piece.copy()
                         else:
                             large_mode = np.hstack((large_mode, piece))
+                if i == 1 and j == 0:
+                    print(qpt)
+                    print(large_mode)
+                    mode1 = large_mode
+                if i == 2 and j == 0:
+                    print(qpt)
+                    print(large_mode)
+                    mode2 = large_mode
                 new_modes.append(norm * large_mode)
+    print(np.dot(mode1, mode2))
 
     new_modes = np.array(new_modes)
     if not sorted:
@@ -70,18 +80,3 @@ def stackModesForSmallCell(ddb, sizes, geometry="orthorhombic", sorted=False):
     else:
         sorted_indices = np.argsort(all_eigs)
         return all_eigs[sorted_indices], new_modes[sorted_indices]
-
-
-def getModesAtGamma(ddb):
-    shutil.rmtree("./tmp", ignore_errors=True)
-    bands = ddb.anaget_phmodes_at_qpoint(
-        ddb.qpoints[0],
-        asr=1,
-        chneut=1,
-        dipdip=1,
-        workdir="./tmp",
-        verbose=0,
-        anaddb_kwargs={"eivec": 1},
-    )
-    eigdis = bands.dyn_mat_eigenvect[0]
-    return bands.phfreqs[0] * 8065.5, eigdis
