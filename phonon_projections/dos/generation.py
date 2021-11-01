@@ -32,12 +32,6 @@ def get_dos(
     else:
         raise ValueError("The model variable is not recognized.")
 
-    # Bugfix to make older models work with PyTorch 1.6
-    # Hopefully temporary
-    for mod in model.modules():
-        if not hasattr(mod, "_non_persistent_buffers_set"):
-            mod._non_persistent_buffers_set = set()
-
     assert len(supercell) == 3, "Supercell should be a length 3 object."
     assert len(qpoints) == 3, "Qpoints should be a length 3 object."
     supercell = tuple(supercell)
