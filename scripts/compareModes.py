@@ -55,28 +55,10 @@ def build_parser():
         help="Modes projection by qpoint.",
     )
     mode_parser.add_argument(
-        "--small",
-        type=str,
-        help="DDB file to open with the primitive unit cell modes.",
-    )
-    mode_parser.add_argument(
         "-f",
-        "--filename",
+        "--modesfile",
         type=str,
         help="h5 file containing the modes and energies of the supercell.",
-    )
-    mode_parser.add_argument(
-        "--size",
-        nargs=2,
-        help="Size of the supercell in number of primitive cells [X, Y].",
-        type=int,
-    )
-    mode_parser.add_argument(
-        "-g",
-        "--geo",
-        default="o",
-        help="Geometry of the supercell, either orthorhombic or hexagonal.",
-        choices=["o", "h"],
     )
     mode_parser.add_argument(
         "--write",
@@ -103,6 +85,7 @@ def main(args):
             seigs.append(e)
 
     seigs, svecs = np.array(seigs), np.array(svecs)
+
     natoms = 2 * i
 
     if args.run_type == "disp":
@@ -145,8 +128,7 @@ def main(args):
                 bvecs = f["basis"][:]
                 beigs = np.zeros(bvecs.shape[0])
         nmodes = len(beigs)
-        #        print(nmodes)
-        #        print(beigs)
+
         maxs, sums, energies = np.zeros(nmodes), np.zeros(nmodes), np.zeros(nmodes)
         vec_ids = np.zeros(nmodes).astype(int)
 
@@ -166,6 +148,9 @@ def main(args):
                 f.create_dataset("projected_energies", data=energies)
 
     elif args.run_type == "projection":
+        eig_dict = {}
+        for i, qpt in enumerate(gDDB.qpoints):
+            eig_dict[qpt] = svecs[6 * i : 6 * i + 6]
         with h5py.File(args.filename, "r") as f:
             try:
                 bvecs = f["modes"][:]
@@ -174,6 +159,7 @@ def main(args):
                 bvecs = f["basis"][:]
                 beigs = np.zeros(bvecs.shape[0])
         nmodes = len(beigs)
+
         sums = np.zeros(nmodes)
         proj_list = []
         for n in range(nmodes):
