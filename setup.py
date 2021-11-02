@@ -1,6 +1,6 @@
 from setuptools import setup
 
-requirements = ["numpy>=1.18", "abipy>=0.8.0"]
+requirements = ["numpy>=1.18", "abipy>=0.8.0", "h5py"]
 
 setup(
     name="phonon_projections",

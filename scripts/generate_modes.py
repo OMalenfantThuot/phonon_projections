@@ -32,11 +32,6 @@ def create_parser():
         type=str,
         default="normal_modes",
     )
-    parser.add_argument(
-        "--rotate",
-        action="store_true",
-        help="Add to rotate the modes from the xz plan to the xy plan.",
-    )
     return parser
 
 

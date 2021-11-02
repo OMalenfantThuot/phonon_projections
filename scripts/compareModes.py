@@ -1,17 +1,20 @@
 #!/usr/bin/env python
 
-from abipy.dfpt.ddb import DdbFile as DDB
+from utils.vibrations import GrapheneDDB
 import numpy as np
 import shutil
 import argparse
 import matplotlib.pyplot as plt
 import h5py
-from phonon_projections.projections import stackModesForSmallCell, project_mode
+from phonon_projections.projections import project_mode
 
 
 def build_parser():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument(
+        "ddb", type=str, help="DDB file to open with the primitive unit cell modes.",
     )
     run_type_subparser = parser.add_subparsers(
         dest="run_type", help="Chooses the type of run."
@@ -24,26 +27,7 @@ def build_parser():
         help="Displacements analysis.",
     )
     displacements_parser.add_argument(
-        "-s",
-        "--small",
-        type=str,
-        help="DDB file to open with the primitive unit cell modes.",
-    )
-    displacements_parser.add_argument(
-        "-f", "--filename", type=str, help="h5 file containing the displacements."
-    )
-    displacements_parser.add_argument(
-        "--size",
-        nargs=2,
-        help="Size of the supercell in number of primitive cells [X, Y].",
-        type=int,
-    )
-    displacements_parser.add_argument(
-        "-g",
-        "--geo",
-        default="o",
-        help="Geometry of the supercell, either orthorhombic or hexagonal.",
-        choices=["o", "h"],
+        "-f", "--dispfile", type=str, help="h5 file containing the displacements."
     )
 
     # Modes projection to primitive cell
@@ -53,28 +37,10 @@ def build_parser():
         help="Modes projection.",
     )
     mode_parser.add_argument(
-        "--small",
-        type=str,
-        help="DDB file to open with the primitive unit cell modes.",
-    )
-    mode_parser.add_argument(
         "-f",
-        "--filename",
+        "--modesfile",
         type=str,
         help="h5 file containing the modes and energies of the supercell.",
-    )
-    mode_parser.add_argument(
-        "--size",
-        nargs=2,
-        help="Size of the supercell in number of primitive cells [X, Y].",
-        type=int,
-    )
-    mode_parser.add_argument(
-        "-g",
-        "--geo",
-        default="o",
-        help="Geometry of the supercell, either orthorhombic or hexagonal.",
-        choices=["o", "h"],
     )
     mode_parser.add_argument(
         "--write",
@@ -125,20 +91,27 @@ def main(args):
         print("You must have the ABINIT executables in your path ... Exiting.")
         exit(-1)
 
-    small_ddb = DDB(args.small)
-    seigs, svecs, eig_dict = stackModesForSmallCell(
-        small_ddb, args.size, geometry=args.geo, sorted=False
-    )
-    #    print(svecs)
-    natoms = 4 * np.prod(args.size) if args.geo == "o" else 2 * np.prod(args.size)
+    gDDB = GrapheneDDB(args.ddb)
+    seigs, svecs = [], []
+    for i, qpoint in enumerate(gDDB.qpoints):
+        for branch in range(6):
+            v, e = gDDB.build_supercell_modes(
+                qpoint.frac_coords, branch, energies=True, return_positions=False,
+            )
+            norm = np.linalg.norm(v)
+            svecs.append(v / norm)
+            seigs.append(e)
+
+    seigs, svecs = np.array(seigs), np.array(svecs)
+    natoms = 2 * i
 
     if args.run_type == "disp":
-        bvecs = h5py.File(args.filename, "r")["displacements"][:].reshape(
+        bvecs = h5py.File(args.dispfile, "r")["displacements"][:].reshape(
             -1, 3 * natoms
         )
         sums = np.zeros(svecs.shape[0])
         for n in range(bvecs.shape[0]):
-            bvec = bvecs[n]
+            bvec = bvecs[:, n]
             for j, svec in enumerate(svecs):
                 val = project_mode(bvec, svec)
                 sums[j] += val
@@ -164,7 +137,7 @@ def main(args):
         plt.savefig("figure.png")
 
     elif args.run_type == "modes":
-        with h5py.File(args.filename, "r") as f:
+        with h5py.File(args.modesfile, "r") as f:
             try:
                 bvecs = f["modes"][:]
                 beigs = f["energies"][:]
@@ -176,6 +149,7 @@ def main(args):
         #        print(beigs)
         maxs, sums, energies = np.zeros(nmodes), np.zeros(nmodes), np.zeros(nmodes)
         vec_ids = np.zeros(nmodes).astype(int)
+
         for n in range(nmodes):
             bvec = bvecs[:, n]
             for j, svec in enumerate(svecs):
@@ -188,7 +162,7 @@ def main(args):
         assert np.allclose(sums, np.ones(nmodes), atol=1.0e-6)
 
         if args.write:
-            with h5py.File(args.filename, "r+") as f:
+            with h5py.File(args.modesfile, "r+") as f:
                 f.create_dataset("projected_energies", data=energies)
 
     elif args.run_type == "projection":
@@ -219,6 +193,7 @@ def main(args):
                 proj_list.append(temp)
 
         print(proj_list)
+
     else:
         raise ValueError("run_type not recognized.")
 
