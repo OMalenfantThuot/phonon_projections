@@ -105,6 +105,6 @@ venv.bak/
 
 # temp files
 *.swp
-
+tmp/
 workdir/
 tmp/
